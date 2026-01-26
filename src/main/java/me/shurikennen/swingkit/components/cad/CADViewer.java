@@ -4,6 +4,8 @@ import lombok.Getter;
 import lombok.Setter;
 
 import javax.swing.*;
+import javax.swing.plaf.ColorUIResource;
+import javax.swing.plaf.UIResource;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseAdapter;
@@ -32,31 +34,34 @@ public class CADViewer<T extends CADEntity> extends JComponent {
     private float marqueeCrossGapPx = 4.0f;
 
     @Setter
-    private Color marqueeWindowFill = new Color(0, 120, 215, 40);
+    private Color defaultLineColor = null;
 
     @Setter
-    private Color marqueeWindowStroke = new Color(0, 120, 215, 160);
+    private Color marqueeWindowFill = null;
 
     @Setter
-    private Color marqueeCrossFill = new Color(0, 180, 0, 40);
+    private Color marqueeWindowStroke = null;
 
     @Setter
-    private Color marqueeCrossStroke = new Color(0, 180, 0, 160);
+    private Color marqueeCrossFill = null;
 
     @Setter
-    private Color selectionColor = new Color(0, 120, 215, 180);
+    private Color marqueeCrossStroke = null;
 
     @Setter
-    private Color hoverColor = new Color(255, 165, 0, 180);
+    private Color selectionColor = null;
 
     @Setter
-    private Color gridMinorColor = new Color(0, 0, 0, 18);
+    private Color hoverColor = null;
 
     @Setter
-    private Color gridMajorColor = new Color(0, 0, 0, 35);
+    private Color gridMinorColor = null;
 
     @Setter
-    private Color gridAxisColor = new Color(0, 0, 0, 60);
+    private Color gridMajorColor = null;
+
+    @Setter
+    private Color gridAxisColor = null;
 
     @Getter
     private int hoveredIndex = -1;
@@ -114,6 +119,8 @@ public class CADViewer<T extends CADEntity> extends JComponent {
     private boolean pendingClickShift = false;
 
     public CADViewer() {
+        super();
+        updateUI();
         setOpaque(true);
 
         MouseAdapter mouse = new MouseAdapter() {
@@ -218,6 +225,13 @@ public class CADViewer<T extends CADEntity> extends JComponent {
         addMouseWheelListener(mouse);
     }
 
+    @Override
+    public void updateUI() {
+        super.updateUI();
+        installUIColors();
+        repaint();
+    }
+
 
     /**
      * Custom rendering method for this component. This method is overridden to draw various elements of the
@@ -243,7 +257,7 @@ public class CADViewer<T extends CADEntity> extends JComponent {
             float strokePx = 1.0f;
             g2.setStroke(new BasicStroke((float) (strokePx / scale)));
 
-            g2.setColor(Color.BLACK);
+            g2.setColor(defaultLineColor);
             for (CADEntity s : entities) {
                 if (s.getColor() != null) g2.setColor(s.getColor());
                 g2.draw(s.getWorldShape());
@@ -310,6 +324,30 @@ public class CADViewer<T extends CADEntity> extends JComponent {
         }
     }
 
+    private void installUIColors() {
+        setBackground(lafOrKeepUserColor(getBackground(), "CADViewer.background", new ColorUIResource(Color.WHITE)));
+        defaultLineColor = lafOrKeepUserColor(defaultLineColor, "CADViewer.defaultLineColor", new ColorUIResource(Color.BLACK));
+        marqueeWindowFill = lafOrKeepUserColor(marqueeWindowFill, "CADViewer.marqueeWindowFill", new ColorUIResource(new Color(0, 120, 215, 40)));
+        marqueeWindowStroke = lafOrKeepUserColor(marqueeWindowStroke, "CADViewer.marqueeWindowStroke", new ColorUIResource(new Color(0, 120, 215, 160)));
+        marqueeCrossFill = lafOrKeepUserColor(marqueeCrossFill, "CADViewer.marqueeCrossFill", new ColorUIResource(new Color(0, 180, 0, 40)));
+        marqueeCrossStroke = lafOrKeepUserColor(marqueeCrossStroke, "CADViewer.marqueeCrossStroke", new ColorUIResource(new Color(0, 180, 0, 160)));
+
+        selectionColor = lafOrKeepUserColor(selectionColor, "CADViewer.selectionColor", new ColorUIResource(new Color(0, 120, 215, 180)));
+        hoverColor = lafOrKeepUserColor(hoverColor, "CADViewer.hoverColor", new ColorUIResource(new Color(255, 165, 0, 180)));
+        gridMinorColor = lafOrKeepUserColor(gridMinorColor, "CADViewer.gridMinorColor", new ColorUIResource(new Color(0, 0, 0, 18)));
+        gridMajorColor = lafOrKeepUserColor(gridMajorColor, "CADViewer.gridMajorColor", new ColorUIResource(new Color(0, 0, 0, 35)));
+        gridAxisColor = lafOrKeepUserColor(gridAxisColor, "CADViewer.gridAxisColor", new ColorUIResource(new Color(0, 0, 0, 60)));
+    }
+
+    private Color lafOrKeepUserColor(Color current, String key, Color fallback) {
+        // If user set a non-UIResource color, keep it
+        if (current != null && !(current instanceof UIResource)) return current;
+
+        Color fromUI = UIManager.getColor(key);
+        if (fromUI != null) return (fromUI instanceof UIResource) ? fromUI : new ColorUIResource(fromUI);
+
+        return fallback; // also ideally a UIResource
+    }
 
     /**
      * Computes and returns a {@code BasicStroke} instance used for picking operations
@@ -810,7 +848,7 @@ public class CADViewer<T extends CADEntity> extends JComponent {
      *
      * @param entities the list of entities whose world bounds are to be calculated
      * @return a {@code Rectangle2D} representing the combined world bounds of the entities,
-     *         or an empty {@code Rectangle2D} if the list is empty
+     * or an empty {@code Rectangle2D} if the list is empty
      */
     private Rectangle2D worldBounds(List<T> entities) {
         Rectangle2D bounds = null;

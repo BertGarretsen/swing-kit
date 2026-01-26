@@ -47,5 +47,10 @@ publishing {
 repositories {
     mavenLocal()
     mavenCentral()
+}
 
+
+dependencies {
+    api("com.formdev:flatlaf:3.7")
+    api("com.formdev:flatlaf-extras:3.7")
 }
