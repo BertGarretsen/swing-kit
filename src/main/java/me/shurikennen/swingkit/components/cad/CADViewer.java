@@ -14,7 +14,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class CADViewer extends JComponent {
+public class CADViewer<T extends CADEntity> extends JComponent {
 
     private transient BasicStroke cachedPickStroke = null;
     private transient double cachedTolWorld = Double.NaN;
@@ -61,7 +61,7 @@ public class CADViewer extends JComponent {
     @Getter
     private int hoveredIndex = -1;
 
-    private final List<CADEntity> entities = new ArrayList<>();
+    private final List<T> entities = new ArrayList<>();
 
     @Getter
     private final DefaultListSelectionModel selectionModel = new DefaultListSelectionModel();
@@ -342,7 +342,7 @@ public class CADViewer extends JComponent {
      * representing the start and end of a marquee selection.
      *
      * @return A {@code Rectangle} representing the marquee selection area, or
-     *         {@code null} if either the start or end screen point is not defined.
+     * {@code null} if either the start or end screen point is not defined.
      */
     private Rectangle getMarqueeScreenRect() {
         if (marqueeStartScreen == null || marqueeEndScreen == null) return null;
@@ -471,9 +471,9 @@ public class CADViewer extends JComponent {
      * storage to prioritize the most recently added entities during selection.
      *
      * @param worldPt The point in world coordinates to test for intersection.
-     * @param pickPx The pixel tolerance around the point for picking an entity.
+     * @param pickPx  The pixel tolerance around the point for picking an entity.
      * @return The index of the first entity that satisfies the picking constraints, or -1 if no
-     *         entity is found.
+     * entity is found.
      */
     private int pickEntityIndex(Point2D worldPt, double pickPx) {
         if (entities.isEmpty()) return -1;
@@ -511,8 +511,8 @@ public class CADViewer extends JComponent {
      * The method ensures that the scale stays within a predefined limit and adjusts the translation
      * of the view to maintain the position of the specified screen point in the transformed world.
      *
-     * @param factor the scaling factor to apply to the current zoom level. A value greater than 1 zooms in,
-     *               while a value between 0 and 1 zooms out.
+     * @param factor   the scaling factor to apply to the current zoom level. A value greater than 1 zooms in,
+     *                 while a value between 0 and 1 zooms out.
      * @param screenPt the point on the screen about which the zoom operation will be centered. This point’s
      *                 position in the world space remains fixed after the zoom operation.
      */
@@ -535,7 +535,7 @@ public class CADViewer extends JComponent {
      * at the specified screen coordinate point. This method shifts the transformation values
      * to align the given points.
      *
-     * @param worldCenter the point in world coordinates that should be centered on the screen
+     * @param worldCenter  the point in world coordinates that should be centered on the screen
      * @param screenCenter the point in screen coordinates where the worldCenter should appear
      */
     private void setWorldCenterAtScreen(Point2D worldCenter, Point2D screenCenter) {
@@ -577,7 +577,7 @@ public class CADViewer extends JComponent {
      *
      * @param screen the point in screen coordinates to be converted
      * @return the corresponding point in world coordinates, or a default point
-     *         (0, 0) if the transformation is not invertible
+     * (0, 0) if the transformation is not invertible
      */
     private Point2D screenToWorld(Point2D screen) {
         try {
@@ -806,19 +806,13 @@ public class CADViewer extends JComponent {
     }
 
     /**
-     * Computes the bounding rectangle in world coordinates that encompasses all
-     * the specified {@code CADEntity} objects. If the input list is empty, returns
-     * a default empty rectangle.
+     * Computes and returns the world bounds that encompass all given entities.
      *
-     * @param entities a list of {@code CADEntity} objects for which the bounding rectangle
-     *                 is to be calculated. Each entity contributes its world bounds to
-     *                 the overall bounding rectangle. An empty list will result in an
-     *                 empty rectangle being returned.
-     * @return a {@code Rectangle2D} object representing the combined bounds of all
-     * entities in world coordinates. If the list is empty, an empty
-     * {@code Rectangle2D.Double} is returned.
+     * @param entities the list of entities whose world bounds are to be calculated
+     * @return a {@code Rectangle2D} representing the combined world bounds of the entities,
+     *         or an empty {@code Rectangle2D} if the list is empty
      */
-    private Rectangle2D worldBounds(List<CADEntity> entities) {
+    private Rectangle2D worldBounds(List<T> entities) {
         Rectangle2D bounds = null;
         for (CADEntity s : entities) {
             Rectangle2D b = s.getBoundsWorld();
@@ -829,14 +823,13 @@ public class CADViewer extends JComponent {
     }
 
     /**
-     * Updates the list of entities managed by the viewer. This method replaces the current
-     * list of entities with the provided list, clears any existing selections, and adjusts
-     * the view to fit the newly provided entities within the visible area.
+     * Updates the current list of entities with a new list of entities.
+     * Clears the existing entities and replaces them with the provided list.
+     * Also clears any existing selections and adjusts the view to fit the new entities.
      *
-     * @param newEntities the new list of {@code CADEntity} objects to be managed by the viewer.
-     *                    Passing a {@code null} value will result in a {@link NullPointerException}.
+     * @param newEntities the new list of entities to be set
      */
-    public void setEntities(List<CADEntity> newEntities) {
+    public void setEntities(List<T> newEntities) {
         entities.clear();
         entities.addAll(newEntities);
         selectionModel.clearSelection();
