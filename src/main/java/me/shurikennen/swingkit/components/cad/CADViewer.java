@@ -16,58 +16,104 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * The {@code CADViewer} class represents a graphical viewing component for CAD-like applications.
+ * It provides functionality for rendering entities, grids, and interactive operations such as zooming,
+ * panning, selection, and marquee interactions. The viewer supports customizable appearance and
+ * interactions through various settings such as grid spacing, selection colors, and more.
+ */
 public class CADViewer<T extends CADEntity> extends JComponent {
 
-    private transient BasicStroke cachedPickStroke = null;
-    private transient double cachedTolWorld = Double.NaN;
+    /**
+     * A cached instance of a BasicStroke object used for pick detection or hit-testing purposes.
+     * This variable may be used to avoid creating a new instance of BasicStroke
+     * every time a pick operation is performed, improving performance by reusing the object.
+     * Initialized to null, it should be set to an appropriate BasicStroke instance
+     * when pick detection functionality is required.
+     */
+    private BasicStroke cachedPickStroke = null;
 
+    /**
+     * Represents a cached value for a tolerance in world coordinates.
+     * This variable is initialized to NaN, indicating that the value has not
+     * been computed or is invalid yet. It can later be updated with a specific
+     * value to optimize repeated calculations or checks involving tolerance
+     * in the world coordinate system.
+     */
+    private double cachedTolWorld = Double.NaN;
+
+    /**
+     * The width of the stroke, in pixels, used for drawing the marquee outline.
+     * This value determines the thickness of the line used to render the marquee.
+     */
     @Setter
     private float marqueeStrokeWidthPx = 1.0f;
 
+    /**
+     * Defines the spacing between grid lines in pixels.
+     * This variable determines the distance, in pixels,
+     * between consecutive lines in a visual grid layout.
+     * The default value is set to 60.0 pixels.
+     */
     @Setter
     private double gridSpacingPx = 60.0;
 
+    /**
+     * Defines the thickness of the dashes used in the marquee effect, measured in pixels.
+     * The value represents the width or cross-dimension of each dash line.
+     * It can be adjusted to customize the visual appearance of the marquee.
+     * The default value is 6.0 pixels.
+     */
     @Setter
     private float marqueeCrossDashPx = 6.0f;
 
+    /**
+     * Represents the gap in pixels between the cross-elements in a marquee effect.
+     * This value determines the spacing between repeating segments of a marquee
+     * animation, providing visual separation to enhance readability or stylistic presentation.
+     * <p>
+     * The default value is set to 4.0 pixels.
+     */
     @Setter
     private float marqueeCrossGapPx = 4.0f;
 
-    @Setter
+    // Look
     private Color defaultLineColor = null;
-
-    @Setter
     private Color marqueeWindowFill = null;
-
-    @Setter
     private Color marqueeWindowStroke = null;
-
-    @Setter
     private Color marqueeCrossFill = null;
-
-    @Setter
     private Color marqueeCrossStroke = null;
-
-    @Setter
     private Color selectionColor = null;
-
-    @Setter
     private Color hoverColor = null;
-
-    @Setter
     private Color gridMinorColor = null;
-
-    @Setter
     private Color gridMajorColor = null;
-
-    @Setter
     private Color gridAxisColor = null;
 
+    /**
+     * Represents the index of the currently hovered item in a list or collection.
+     * The value is used to track user interaction with items, typically in a UI context.
+     * <p>
+     * By default, the value is set to -1, indicating that no item is currently hovered.
+     * This variable can be updated dynamically based on user actions such as mouse hover events.
+     */
     @Getter
     private int hoveredIndex = -1;
 
+    /**
+     * A final list that holds a collection of entities of type T.
+     * This list is initialized as an empty {@code ArrayList} and cannot be reassigned.
+     */
     private final List<T> entities = new ArrayList<>();
 
+    /**
+     * Represents the selection model used to manage and track selections
+     * in a list or table component. This field is an instance of
+     * {@link DefaultListSelectionModel}, supporting operations such as
+     * selection updates, range selections, and single/multiple item selections.
+     * <p>
+     * The selection model is immutable, ensuring it cannot be reassigned
+     * after initialization.
+     */
     @Getter
     private final DefaultListSelectionModel selectionModel = new DefaultListSelectionModel();
 
@@ -104,18 +150,97 @@ public class CADViewer<T extends CADEntity> extends JComponent {
     @Setter
     private boolean flipY = true;
 
+    // View State
+
+    /**
+     * Represents the scale factor used to adjust the size or proportion
+     * of elements in a given context. A scale of 1.0 indicates no scaling,
+     * while values greater than 1.0 enlarge elements and values between 0.0
+     * and 1.0 reduce their size.
+     */
+
     private double scale = 1.0;
+
+    /**
+     * Represents the x-axis translation value.
+     * Used to define the horizontal displacement or movement.
+     */
     private double tx = 0.0;
+
+    /**
+     * Represents the y-axis translation value.
+     * Used to define the vertical displacement or movement.
+     */
     private double ty = 0.0;
+
+    /**
+     * Indicator for the current state of the marquee functionality.
+     * When set to true, the marquee effect is active.
+     * When set to false, the marquee effect is inactive.
+     */
     private boolean marqueeActive = false;
 
+    /**
+     * Represents the coordinates of the last drag position in a 2D space.
+     * This variable is used to track the location where the most recent
+     * drag event occurred.
+     */
     private Point lastDrag;
+
+    /**
+     * Represents the starting point of a marquee selection on the screen.
+     * This variable holds the coordinates of the initial click or touch
+     * point in the screen space where the marquee selection begins.
+     * It is expected to be null when no selection is in progress.
+     * <p>
+     * The value is stored as a Point object, representing the x and y
+     * coordinates in the screen's coordinate system.
+     */
     private Point marqueeStartScreen = null;
+
+    /**
+     * Represents the ending point of a marquee selection in screen coordinates.
+     * This variable stores the location where the marquee operation concludes
+     * on the screen.
+     * It is initialized to null, indicating no selection has been made yet.
+     */
     private Point marqueeEndScreen = null;
 
+    /**
+     * A flag indicating whether a click action is currently pending.
+     * This variable is used to track the state of a click event
+     * to prevent duplicate or unintended actions from being triggered.
+     * <p>
+     * The default value is {@code false}, meaning no click event is pending initially.
+     */
     private boolean pendingClick = false;
+
+    /**
+     * Represents the index of a pending click event that has not yet been processed.
+     * This value is used to track which item or element is awaiting interaction processing.
+     * <p>
+     * A value of -1 indicates that there is currently no pending click event.
+     */
     private int pendingClickHitIndex = -1;
+
+    /**
+     * Represents the state of a pending control click action.
+     * This variable is used to track whether a control click event
+     * is currently awaiting execution or processing.
+     * <p>
+     * The value is set to {@code true} if a control click event is pending,
+     * and {@code false} otherwise.
+     */
     private boolean pendingClickCtrl = false;
+
+    /**
+     * Represents the state of a pending shift click action.
+     * This variable is used to track whether a shift click event
+     * is currently awaiting execution or processing.
+     * <p>
+     * The value is set to {@code true} if a shift click event is pending,
+     * and {@code false} otherwise.
+     */
     private boolean pendingClickShift = false;
 
     public CADViewer() {
@@ -228,7 +353,7 @@ public class CADViewer<T extends CADEntity> extends JComponent {
     @Override
     public void updateUI() {
         super.updateUI();
-        installUIColors();
+        installUIDefaults();
         repaint();
     }
 
@@ -324,7 +449,7 @@ public class CADViewer<T extends CADEntity> extends JComponent {
         }
     }
 
-    private void installUIColors() {
+    private void installUIDefaults() {
         setBackground(lafOrKeepUserColor(getBackground(), "CADViewer.background", new ColorUIResource(Color.WHITE)));
         defaultLineColor = lafOrKeepUserColor(defaultLineColor, "CADViewer.defaultLineColor", new ColorUIResource(Color.BLACK));
         marqueeWindowFill = lafOrKeepUserColor(marqueeWindowFill, "CADViewer.marqueeWindowFill", new ColorUIResource(new Color(0, 120, 215, 40)));
