@@ -60,6 +60,10 @@ public class AccordionPanel extends JPanel {
      */
     private Icon collapsedIcon;
 
+    public AccordionPanel() {
+        this("Accordion", new JLabel("Content"));
+    }
+
     /**
      * Creates a new AccordionPanel with the specified title and content.
      * By default, the panel is expanded.

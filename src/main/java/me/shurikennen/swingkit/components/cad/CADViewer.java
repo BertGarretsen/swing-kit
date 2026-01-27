@@ -119,7 +119,7 @@ public class CADViewer<T extends CADEntity> extends JComponent {
 
     {
         selectionModel.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-        selectionModel.addListSelectionListener(_ -> repaint());
+        selectionModel.addListSelectionListener(e -> repaint());
     }
 
 
