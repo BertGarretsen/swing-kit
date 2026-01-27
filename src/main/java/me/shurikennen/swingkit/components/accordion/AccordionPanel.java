@@ -71,7 +71,6 @@ public class AccordionPanel extends JPanel {
         this.content = content;
         setLayout(new BorderLayout());
 
-        // Initialize icons (using JTree icons as requested)
         updateIcons();
 
         // Header
