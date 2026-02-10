@@ -1,4 +1,4 @@
-package me.shurikennen.swingkit.components.accordion;
+package me.shurikennen.swingkit.components;
 
 import lombok.Getter;
 
