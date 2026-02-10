@@ -103,7 +103,3 @@ This project uses Gradle.
 - `src/main/java/me/shurikennen/swingkit/docfilter`: Input validation filters.
 - `src/main/java/me/shurikennen/swingkit/util`: Utility classes like `Toast`.
 - `src/main/resources`: Default FlatLaf property files for themes.
-
-## License
-
-TODO: Add license information (e.g., MIT, Apache 2.0).
