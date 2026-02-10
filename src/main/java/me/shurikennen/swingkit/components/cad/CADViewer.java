@@ -17,62 +17,41 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * The {@code CADViewer} class represents a graphical viewing component for CAD-like applications.
- * It provides functionality for rendering entities, grids, and interactive operations such as zooming,
- * panning, selection, and marquee interactions. The viewer supports customizable appearance and
- * interactions through various settings such as grid spacing, selection colors, and more.
+ * A graphical viewing component for CAD-like applications.
+ * Supports rendering entities, grids, and interactive operations like zooming, panning, and selection.
  */
 public class CADViewer<T extends CADEntity> extends JComponent {
 
     /**
-     * A cached instance of a BasicStroke object used for pick detection or hit-testing purposes.
-     * This variable may be used to avoid creating a new instance of BasicStroke
-     * every time a pick operation is performed, improving performance by reusing the object.
-     * Initialized to null, it should be set to an appropriate BasicStroke instance
-     * when pick detection functionality is required.
+     * Cached BasicStroke used for pick detection.
      */
     private BasicStroke cachedPickStroke = null;
 
     /**
-     * Represents a cached value for a tolerance in world coordinates.
-     * This variable is initialized to NaN, indicating that the value has not
-     * been computed or is invalid yet. It can later be updated with a specific
-     * value to optimize repeated calculations or checks involving tolerance
-     * in the world coordinate system.
+     * Cached tolerance in world coordinates.
      */
     private double cachedTolWorld = Double.NaN;
 
     /**
-     * The width of the stroke, in pixels, used for drawing the marquee outline.
-     * This value determines the thickness of the line used to render the marquee.
+     * Stroke width in pixels for the marquee outline.
      */
     @Setter
     private float marqueeStrokeWidthPx = 1.0f;
 
     /**
-     * Defines the spacing between grid lines in pixels.
-     * This variable determines the distance, in pixels,
-     * between consecutive lines in a visual grid layout.
-     * The default value is set to 60.0 pixels.
+     * Spacing between grid lines in pixels.
      */
     @Setter
     private double gridSpacingPx = 60.0;
 
     /**
-     * Defines the thickness of the dashes used in the marquee effect, measured in pixels.
-     * The value represents the width or cross-dimension of each dash line.
-     * It can be adjusted to customize the visual appearance of the marquee.
-     * The default value is 6.0 pixels.
+     * Thickness of dashes in the marquee effect (pixels).
      */
     @Setter
     private float marqueeCrossDashPx = 6.0f;
 
     /**
-     * Represents the gap in pixels between the cross-elements in a marquee effect.
-     * This value determines the spacing between repeating segments of a marquee
-     * animation, providing visual separation to enhance readability or stylistic presentation.
-     * <p>
-     * The default value is set to 4.0 pixels.
+     * Gap between dashes in the marquee effect (pixels).
      */
     @Setter
     private float marqueeCrossGapPx = 4.0f;
@@ -90,29 +69,18 @@ public class CADViewer<T extends CADEntity> extends JComponent {
     private Color gridAxisColor = null;
 
     /**
-     * Represents the index of the currently hovered item in a list or collection.
-     * The value is used to track user interaction with items, typically in a UI context.
-     * <p>
-     * By default, the value is set to -1, indicating that no item is currently hovered.
-     * This variable can be updated dynamically based on user actions such as mouse hover events.
+     * Index of the currently hovered entity, or -1 if none.
      */
     @Getter
     private int hoveredIndex = -1;
 
     /**
-     * A final list that holds a collection of entities of type T.
-     * This list is initialized as an empty {@code ArrayList} and cannot be reassigned.
+     * List of entities to be rendered in the viewer.
      */
     private final List<T> entities = new ArrayList<>();
 
     /**
-     * Represents the selection model used to manage and track selections
-     * in a list or table component. This field is an instance of
-     * {@link DefaultListSelectionModel}, supporting operations such as
-     * selection updates, range selections, and single/multiple item selections.
-     * <p>
-     * The selection model is immutable, ensuring it cannot be reassigned
-     * after initialization.
+     * Selection model for managing selected entities.
      */
     @Getter
     private final DefaultListSelectionModel selectionModel = new DefaultListSelectionModel();
@@ -124,28 +92,19 @@ public class CADViewer<T extends CADEntity> extends JComponent {
 
 
     /**
-     * The amount by which shapes are expanded for picking operations. This value
-     * serves as a tolerance in screen-space pixels to include nearby shapes
-     * when determining user interactions such as selection or hovering.
+     * Tolerance in pixels for picking operations.
      */
     @Setter
     private int pickExpansion = 6;
 
     /**
-     * Specifies the drag threshold, in pixels, for initiating a marquee selection.
-     * When the user's drag motion exceeds this threshold, the marquee selection mode activates.
-     * Affects how sensitive the CAD viewer is to slight mouse movements during a drag operation.
+     * Pixel threshold to start a marquee selection.
      */
     @Setter
     private int marqueeDragThresholdPx = 3;
 
     /**
-     * Indicates whether the Y-axis of the CAD viewer is flipped.
-     * When set to {@code true}, the Y-coordinate increases downwards on the screen.
-     * When set to {@code false}, the Y-coordinate increases upwards.
-     * <p>
-     * This property is primarily used to adjust the rendering and interaction logic
-     * for coordinate systems that differ in their Y-axis orientation.
+     * Whether the Y-axis increases downwards (true) or upwards (false).
      */
     @Setter
     private boolean flipY = true;
@@ -153,94 +112,43 @@ public class CADViewer<T extends CADEntity> extends JComponent {
     // View State
 
     /**
-     * Represents the scale factor used to adjust the size or proportion
-     * of elements in a given context. A scale of 1.0 indicates no scaling,
-     * while values greater than 1.0 enlarge elements and values between 0.0
-     * and 1.0 reduce their size.
+     * Current zoom scale factor.
      */
-
     private double scale = 1.0;
 
     /**
-     * Represents the x-axis translation value.
-     * Used to define the horizontal displacement or movement.
+     * X-axis translation.
      */
     private double tx = 0.0;
 
     /**
-     * Represents the y-axis translation value.
-     * Used to define the vertical displacement or movement.
+     * Y-axis translation.
      */
     private double ty = 0.0;
 
     /**
-     * Indicator for the current state of the marquee functionality.
-     * When set to true, the marquee effect is active.
-     * When set to false, the marquee effect is inactive.
+     * Whether marquee selection is currently active.
      */
     private boolean marqueeActive = false;
 
     /**
-     * Represents the coordinates of the last drag position in a 2D space.
-     * This variable is used to track the location where the most recent
-     * drag event occurred.
+     * Last recorded mouse position for dragging.
      */
     private Point lastDrag;
 
     /**
-     * Represents the starting point of a marquee selection on the screen.
-     * This variable holds the coordinates of the initial click or touch
-     * point in the screen space where the marquee selection begins.
-     * It is expected to be null when no selection is in progress.
-     * <p>
-     * The value is stored as a Point object, representing the x and y
-     * coordinates in the screen's coordinate system.
+     * Marquee start point in screen coordinates.
      */
     private Point marqueeStartScreen = null;
 
     /**
-     * Represents the ending point of a marquee selection in screen coordinates.
-     * This variable stores the location where the marquee operation concludes
-     * on the screen.
-     * It is initialized to null, indicating no selection has been made yet.
+     * Marquee end point in screen coordinates.
      */
     private Point marqueeEndScreen = null;
 
-    /**
-     * A flag indicating whether a click action is currently pending.
-     * This variable is used to track the state of a click event
-     * to prevent duplicate or unintended actions from being triggered.
-     * <p>
-     * The default value is {@code false}, meaning no click event is pending initially.
-     */
     private boolean pendingClick = false;
-
-    /**
-     * Represents the index of a pending click event that has not yet been processed.
-     * This value is used to track which item or element is awaiting interaction processing.
-     * <p>
-     * A value of -1 indicates that there is currently no pending click event.
-     */
     private int pendingClickHitIndex = -1;
-
-    /**
-     * Represents the state of a pending control click action.
-     * This variable is used to track whether a control click event
-     * is currently awaiting execution or processing.
-     * <p>
-     * The value is set to {@code true} if a control click event is pending,
-     * and {@code false} otherwise.
-     */
     private boolean pendingClickCtrl = false;
-
-    /**
-     * Represents the state of a pending shift click action.
-     * This variable is used to track whether a shift click event
-     * is currently awaiting execution or processing.
-     * <p>
-     * The value is set to {@code true} if a shift click event is pending,
-     * and {@code false} otherwise.
-     */
     private boolean pendingClickShift = false;
 
     public CADViewer() {
@@ -359,10 +267,6 @@ public class CADViewer<T extends CADEntity> extends JComponent {
 
 
     /**
-     * Custom rendering method for this component. This method is overridden to draw various elements of the
-     * user interface, such as the background, a grid, and graphical entities. It also handles visual cues for
-     * selection, hovering, and marquee interactions.
-     *
      * @param g the {@code Graphics} object used for painting the component
      */
     @Override
@@ -465,22 +369,15 @@ public class CADViewer<T extends CADEntity> extends JComponent {
     }
 
     private Color lafOrKeepUserColor(Color current, String key, Color fallback) {
-        // If user set a non-UIResource color, keep it
         if (current != null && !(current instanceof UIResource)) return current;
 
         Color fromUI = UIManager.getColor(key);
         if (fromUI != null) return (fromUI instanceof UIResource) ? fromUI : new ColorUIResource(fromUI);
 
-        return fallback; // also ideally a UIResource
+        return fallback;
     }
 
     /**
-     * Computes and returns a {@code BasicStroke} instance used for picking operations
-     * in world coordinates. The stroke is determined by the scaling factor and a
-     * predefined pick expansion value. If the computed tolerance changes or the stroke
-     * is not yet cached, a new {@code BasicStroke} object is created and cached
-     * for future use.
-     *
      * @return a {@code BasicStroke} configured for object picking in world coordinates
      */
     private BasicStroke getPickStrokeWorld() {
@@ -501,11 +398,7 @@ public class CADViewer<T extends CADEntity> extends JComponent {
 
 
     /**
-     * Calculates and returns the rectangular area defined by two screen points,
-     * representing the start and end of a marquee selection.
-     *
-     * @return A {@code Rectangle} representing the marquee selection area, or
-     * {@code null} if either the start or end screen point is not defined.
+     * @return A {@code Rectangle} representing the marquee selection area, or {@code null} if undefined.
      */
     private Rectangle getMarqueeScreenRect() {
         if (marqueeStartScreen == null || marqueeEndScreen == null) return null;
@@ -520,13 +413,10 @@ public class CADViewer<T extends CADEntity> extends JComponent {
 
 
     /**
-     * Applies marquee selection logic to select or deselect entities based on the provided screen rectangle
-     * and modifier keys. The selection behavior depends on whether the selection is a left-to-right marquee
-     * or right-to-left marquee, as well as the current control and shift key states.
-     *
-     * @param screenRect the rectangle in screen coordinates that defines the selection area
-     * @param ctrl       specifies if the control (Ctrl) key is held during selection; used to toggle selection of entities
-     * @param shift      specifies if the shift key is held during selection; typically used to extend the current selection
+     * Applies marquee selection logic.
+     * @param screenRect rectangle in screen coordinates
+     * @param ctrl true to toggle selection
+     * @param shift true to extend selection
      */
     private void applyMarqueeSelection(Rectangle screenRect, boolean ctrl, boolean shift) {
         if (entities.isEmpty()) return;
@@ -587,16 +477,10 @@ public class CADViewer<T extends CADEntity> extends JComponent {
 
 
     /**
-     * Handles the selection logic based on user interaction with a specific index
-     * in a data model. Supports selection adjustments with optional control (Ctrl)
-     * and shift (Shift) key modifiers. The selection model is updated accordingly.
-     *
-     * @param hitIndex the index of the item to be processed for selection. A negative
-     *                 value indicates no specific item was clicked.
-     * @param ctrl     a boolean flag indicating if the control (Ctrl) key is pressed.
-     *                 If true, toggles the selection state of the specified item.
-     * @param shift    a boolean flag indicating if the shift (Shift) key is pressed.
-     *                 If true, adds the specified item to the selection interval.
+     * Handles selection logic for a specific index.
+     * @param hitIndex index of the item, or negative if none
+     * @param ctrl toggle selection state
+     * @param shift extend selection
      */
     private void handleClickSelection(int hitIndex, boolean ctrl, boolean shift) {
         selectionModel.setValueIsAdjusting(true);
@@ -629,14 +513,9 @@ public class CADViewer<T extends CADEntity> extends JComponent {
 
 
     /**
-     * Determines the index of the entity that intersects with a given point in world coordinates
-     * within a specified pixel tolerance. The method checks entities in reverse order of their
-     * storage to prioritize the most recently added entities during selection.
-     *
-     * @param worldPt The point in world coordinates to test for intersection.
-     * @param pickPx  The pixel tolerance around the point for picking an entity.
-     * @return The index of the first entity that satisfies the picking constraints, or -1 if no
-     * entity is found.
+     * @param worldPt Point in world coordinates to test.
+     * @param pickPx Pixel tolerance for picking.
+     * @return Index of the first entity found, or -1.
      */
     private int pickEntityIndex(Point2D worldPt, double pickPx) {
         if (entities.isEmpty()) return -1;
@@ -670,14 +549,9 @@ public class CADViewer<T extends CADEntity> extends JComponent {
 
 
     /**
-     * Adjusts the zoom level of the view by a specified factor, centering the zoom around a given screen point.
-     * The method ensures that the scale stays within a predefined limit and adjusts the translation
-     * of the view to maintain the position of the specified screen point in the transformed world.
-     *
-     * @param factor   the scaling factor to apply to the current zoom level. A value greater than 1 zooms in,
-     *                 while a value between 0 and 1 zooms out.
-     * @param screenPt the point on the screen about which the zoom operation will be centered. This point’s
-     *                 position in the world space remains fixed after the zoom operation.
+     * Zooms the view about a screen point.
+     * @param factor zoom factor
+     * @param screenPt point to zoom about
      */
     private void zoomAboutScreenPoint(double factor, Point2D screenPt) {
         Point2D worldBefore = screenToWorld(screenPt);
@@ -694,12 +568,7 @@ public class CADViewer<T extends CADEntity> extends JComponent {
 
 
     /**
-     * Adjusts the transformation so that the specified world coordinate point is centered
-     * at the specified screen coordinate point. This method shifts the transformation values
-     * to align the given points.
-     *
-     * @param worldCenter  the point in world coordinates that should be centered on the screen
-     * @param screenCenter the point in screen coordinates where the worldCenter should appear
+     * Aligns the world point with the specified screen point.
      */
     private void setWorldCenterAtScreen(Point2D worldCenter, Point2D screenCenter) {
         Point2D screenOfWorldCenter = worldToScreen(worldCenter);
@@ -709,11 +578,7 @@ public class CADViewer<T extends CADEntity> extends JComponent {
 
 
     /**
-     * Computes and returns an {@code AffineTransform} that maps coordinates from the world space
-     * to the screen space. The transformation includes translation, scaling, and optional flipping
-     * along the Y-axis, depending on the configuration.
-     *
-     * @return an {@code AffineTransform} representing the world-to-screen transformation.
+     * @return transformation from world to screen space.
      */
     private AffineTransform worldToScreenTransform() {
         AffineTransform at = new AffineTransform();
@@ -725,10 +590,7 @@ public class CADViewer<T extends CADEntity> extends JComponent {
 
 
     /**
-     * Converts a point from world coordinates to screen coordinates.
-     *
-     * @param world the point in world coordinates to be transformed.
-     * @return the transformed point in screen coordinates.
+     * Converts a point from world to screen coordinates.
      */
     private Point2D worldToScreen(Point2D world) {
         return worldToScreenTransform().transform(world, null);
@@ -736,11 +598,7 @@ public class CADViewer<T extends CADEntity> extends JComponent {
 
 
     /**
-     * Converts a point from screen coordinates to world coordinates.
-     *
-     * @param screen the point in screen coordinates to be converted
-     * @return the corresponding point in world coordinates, or a default point
-     * (0, 0) if the transformation is not invertible
+     * Converts a point from screen to world coordinates.
      */
     private Point2D screenToWorld(Point2D screen) {
         try {
@@ -752,13 +610,7 @@ public class CADViewer<T extends CADEntity> extends JComponent {
     }
 
     /**
-     * Renders a grid on the given Graphics2D object based on the current view and scale.
-     * The grid consists of both major and minor lines, with configurable spacing and appearance.
-     * Major lines are drawn at intervals of every fifth minor line, while the grid axes
-     * (horizontal and vertical) are emphasized with a different color.
-     *
-     * @param g2 The Graphics2D object on which the grid is drawn. This object is responsible
-     *           for handling the rendering of the grid lines.
+     * Renders the grid.
      */
     private void paintGrid(Graphics2D g2) {
         double spacingWorld = niceStep(gridSpacingPx / scale);
@@ -822,13 +674,7 @@ public class CADViewer<T extends CADEntity> extends JComponent {
     }
 
     /**
-     * Adjusts the zoom level of a viewport to fit all entities within the visible area,
-     * accounting for specified padding. Ensures that the entire content is displayed
-     * while maintaining the aspect ratio.
-     *
-     * @param paddingPx The amount of padding in pixels to be applied around the content
-     *                  when fitting it into the viewport. This padding reduces the
-     *                  available space used for the zoom calculation.
+     * Zooms the view to fit all entities with padding.
      */
     public void zoomToFit(double paddingPx) {
         if (entities.isEmpty() || getWidth() <= 0 || getHeight() <= 0) return;
@@ -858,12 +704,6 @@ public class CADViewer<T extends CADEntity> extends JComponent {
 
     /**
      * Sets the index of the currently hovered entity.
-     * The hovered index represents the entity that is currently under the cursor
-     * or in focus, and is used to visually indicate this state in the viewer.
-     * If the new index is the same as the previous one, no action is taken.
-     *
-     * @param idx the zero-based index of the hovered entity. A negative value
-     *            typically indicates that no entity is currently hovered.
      */
     public void setHoveredIndex(int idx) {
         int old = this.hoveredIndex;
@@ -874,13 +714,7 @@ public class CADViewer<T extends CADEntity> extends JComponent {
     }
 
     /**
-     * Calculates and returns the visible rectangle in world coordinates based on the current
-     * viewport size and transformation. This method leverages the screen-to-world coordinate
-     * mapping to determine the world bounds corresponding to the screen's corners.
-     *
-     * @return a {@code Rectangle2D} representing the current visible area in world coordinates.
-     * This includes the smallest axis-aligned rectangle that encapsulates all four
-     * corners of the viewport transformed into world space.
+     * @return visible rectangle in world coordinates.
      */
     private Rectangle2D getVisibleWorldRect() {
         Point2D tl = screenToWorld(new Point2D.Double(0, 0));
@@ -897,14 +731,7 @@ public class CADViewer<T extends CADEntity> extends JComponent {
     }
 
     /**
-     * Generates a "nice" step value based on the provided raw input. This is often
-     * used to create intervals for grid lines or scales in a visually pleasing way.
-     * The returned step value is a rounded, easy-to-understand number (e.g., 1, 2, 5, 10).
-     *
-     * @param raw the raw input value from which the "nice" step is calculated.
-     *            This value must be positive; if zero or negative, a default value of 1 is returned.
-     * @return a "nice" step value, derived from the input, that is a power of 10
-     * or a fraction thereof (e.g., 1, 2, 5, 10).
+     * Generates a "nice" step value for grids or scales (e.g., 1, 2, 5, 10).
      */
     private static double niceStep(double raw) {
         if (raw <= 0) return 1;
@@ -921,14 +748,7 @@ public class CADViewer<T extends CADEntity> extends JComponent {
     }
 
     /**
-     * Determines whether two rectangles intersect when one of them is expanded by a specified amount.
-     * Degenerate cases, where the rectangles may collapse into lines or points, are allowed.
-     *
-     * @param a      the first rectangle, specified as a {@code Rectangle2D}. This represents the fixed rectangle.
-     * @param b      the second rectangle, specified as a {@code Rectangle2D}. This rectangle will be expanded.
-     * @param expand the amount by which the second rectangle {@code b} is expanded on all sides.
-     *               A positive value enlarges the rectangle, while a negative value shrinks it.
-     * @return true if the expanded rectangle {@code b} intersects with rectangle {@code a}; false otherwise.
+     * Checks if rectangle 'a' intersects rectangle 'b' expanded by 'expand'.
      */
     private boolean intersectsExpandedAllowDegenerate(Rectangle2D a, Rectangle2D b, double expand) {
         double ax0 = a.getMinX();
@@ -945,16 +765,7 @@ public class CADViewer<T extends CADEntity> extends JComponent {
     }
 
     /**
-     * Determines if a given rectangle, specified by its bounding box, is completely contained
-     * within another rectangle, allowing for the possibility of degenerate cases where the
-     * rectangles may collapse to lines or points.
-     *
-     * @param container the rectangle that is expected to contain the other rectangle.
-     *                  This rectangle defines the outer boundary.
-     * @param bounds    the rectangle to be checked for containment within the container.
-     *                  Its corners are evaluated to ensure they fall within the container.
-     * @return true if all corners of the {@code bounds} rectangle are within the {@code container}
-     * rectangle; false otherwise.
+     * Checks if 'container' completely contains 'bounds'.
      */
     private boolean containsBoundsAllowDegenerate(Rectangle2D container, Rectangle2D bounds) {
         double x0 = bounds.getMinX();
@@ -969,11 +780,7 @@ public class CADViewer<T extends CADEntity> extends JComponent {
     }
 
     /**
-     * Computes and returns the world bounds that encompass all given entities.
-     *
-     * @param entities the list of entities whose world bounds are to be calculated
-     * @return a {@code Rectangle2D} representing the combined world bounds of the entities,
-     * or an empty {@code Rectangle2D} if the list is empty
+     * @return combined world bounds of all entities.
      */
     private Rectangle2D worldBounds(List<T> entities) {
         Rectangle2D bounds = null;
@@ -986,11 +793,7 @@ public class CADViewer<T extends CADEntity> extends JComponent {
     }
 
     /**
-     * Updates the current list of entities with a new list of entities.
-     * Clears the existing entities and replaces them with the provided list.
-     * Also clears any existing selections and adjusts the view to fit the new entities.
-     *
-     * @param newEntities the new list of entities to be set
+     * Replaces the current entities and zooms to fit.
      */
     public void setEntities(List<T> newEntities) {
         entities.clear();
@@ -1000,25 +803,14 @@ public class CADViewer<T extends CADEntity> extends JComponent {
     }
 
     /**
-     * Retrieves an unmodifiable list of all {@code CADEntity} objects currently
-     * managed by the viewer. This method provides a read-only view of the entities,
-     * ensuring the underlying collection remains immutable.
-     *
-     * @return a list of {@code CADEntity} objects representing all entities in the viewer.
-     * The returned list is unmodifiable, and changes to the original collection
-     * will not affect the client after retrieval.
+     * @return unmodifiable list of all entities.
      */
     public List<CADEntity> getEntities() {
         return Collections.unmodifiableList(entities);
     }
 
     /**
-     * Retrieves a list of the currently selected entities from the viewer.
-     * The selection model determines which indices are considered selected,
-     * and this method collects the entities corresponding to those indices.
-     *
-     * @return a list of {@code CADEntity} objects representing the currently selected entities.
-     * If no entities are selected, an empty list is returned.
+     * @return list of currently selected entities.
      */
     public List<CADEntity> getSelectedEntities() {
         int min = selectionModel.getMinSelectionIndex();
@@ -1033,10 +825,7 @@ public class CADViewer<T extends CADEntity> extends JComponent {
     }
 
     /**
-     * Sets the selection mode for the selection model.
-     *
-     * @param mode the selection mode to be applied. This determines how selections are handled,
-     *             such as single selection, multiple selection, or other supported modes.
+     * Sets the selection mode (e.g., single, multiple).
      */
     public void setSelectionMode(int mode) {
         selectionModel.setSelectionMode(mode);
