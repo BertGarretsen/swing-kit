@@ -51,6 +51,8 @@ repositories {
 
 
 dependencies {
+    api("com.miglayout:miglayout:3.7.4")
     api("com.formdev:flatlaf:3.7")
     api("com.formdev:flatlaf-extras:3.7")
+    api("com.formdev:flatlaf-fonts-roboto:2.137")
 }
