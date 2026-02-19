@@ -1,61 +1,95 @@
 package me.shurikennen.swingkit.components;
 
-import lombok.Setter;
+import lombok.Getter;
 
 import javax.swing.*;
+import java.util.Objects;
 import java.util.function.Predicate;
 
 
 @SuppressWarnings("unchecked")
 public class ValidatingComboBox<E> extends JComboBox<E> {
-    @Setter
-    private Predicate<E> validator;
+    @Getter
+    private Predicate<? super E> validator;
+
     private Object lastValid;
-    private boolean suppress;
+    private boolean reverting;
 
-
-    public ValidatingComboBox() {
-        this.validator = e -> true;
-        this.lastValid = getSelectedItem();
+    public ValidatingComboBox(Predicate<? super E> validator) {
+        this.validator = Objects.requireNonNull(validator);
+        this.lastValid = super.getSelectedItem();
     }
 
+    public void setValidator(Predicate<? super E> validator) {
+        this.validator = Objects.requireNonNull(validator);
+        revalidateCurrentSilently();
+    }
 
     @Override
     public void setModel(ComboBoxModel<E> aModel) {
-        super.setModel(aModel);
+        reverting = true;
+        try {
+            super.setModel(aModel);
 
-        if (validator != null && validator.test((E) getSelectedItem())) {
-            lastValid = getSelectedItem();
+            Object sel = super.getSelectedItem();
+            if (sel == null && aModel != null && aModel.getSize() > 0) {
+                sel = aModel.getElementAt(0);
+                super.setSelectedItem(sel);
+                if (isEditable()) getEditor().setItem(sel);
+            }
+            lastValid = sel;
+        } finally {
+            reverting = false;
         }
+
+        revalidateCurrentSilently();
+    }
+
+    @Override
+    protected void fireActionEvent() {
+        if (reverting) return;
+
+        @SuppressWarnings("unchecked")
+        E candidate = (E) (isEditable() ? getEditor().getItem() : getSelectedItem());
+
+        if (validator.test(candidate)) {
+            lastValid = candidate;
+            super.fireActionEvent();
+            return;
+        }
+
+        revertSilentlyToLastValid();
     }
 
     @Override
     public void setSelectedItem(Object anObject) {
         super.setSelectedItem(anObject);
 
-        if (!suppress && validator.test((E) getSelectedItem())) {
-            lastValid = getSelectedItem();
+        if (!reverting) {
+            lastValid = super.getSelectedItem();
         }
     }
 
-    @Override
-    protected void fireActionEvent() {
-        if (suppress) return;
+    private void revalidateCurrentSilently() {
+        if (reverting) return;
 
+        @SuppressWarnings("unchecked")
         E candidate = (E) (isEditable() ? getEditor().getItem() : getSelectedItem());
 
-        if (validator.test(candidate)) {
-            lastValid = candidate;
-            super.fireActionEvent();
+        if (!validator.test(candidate)) {
+            revertSilentlyToLastValid();
         } else {
+            lastValid = candidate;
+        }
+    }
 
-            suppress = true;
-            try {
-                if (isEditable()) getEditor().setItem(lastValid);
-                super.setSelectedItem(lastValid);
-            } finally {
-                suppress = false;
-            }
+    private void revertSilentlyToLastValid() {
+        reverting = true;
+        try {
+            if (isEditable()) getEditor().setItem(lastValid);
+            super.setSelectedItem(lastValid);
+        } finally {
+            reverting = false;
         }
     }
 }
