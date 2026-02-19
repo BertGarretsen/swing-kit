@@ -3,7 +3,6 @@ package me.shurikennen.swingkit.components;
 import lombok.Getter;
 
 import javax.swing.*;
-import java.util.Objects;
 import java.util.function.Predicate;
 
 
@@ -16,12 +15,15 @@ public class ValidatingComboBox<E> extends JComboBox<E> {
     private boolean reverting;
 
     public ValidatingComboBox(Predicate<? super E> validator) {
-        this.validator = Objects.requireNonNull(validator);
+        this.validator = validator;
         this.lastValid = super.getSelectedItem();
     }
 
+    /**
+     * @param validator nullable; null means "accept everything"
+     */
     public void setValidator(Predicate<? super E> validator) {
-        this.validator = Objects.requireNonNull(validator);
+        this.validator = validator;
         revalidateCurrentSilently();
     }
 
@@ -52,7 +54,7 @@ public class ValidatingComboBox<E> extends JComboBox<E> {
         @SuppressWarnings("unchecked")
         E candidate = (E) (isEditable() ? getEditor().getItem() : getSelectedItem());
 
-        if (validator.test(candidate)) {
+        if (isValid(candidate)) {
             lastValid = candidate;
             super.fireActionEvent();
             return;
@@ -70,13 +72,18 @@ public class ValidatingComboBox<E> extends JComboBox<E> {
         }
     }
 
+
+    private boolean isValid(E candidate) {
+        return validator == null || validator.test(candidate);
+    }
+
     private void revalidateCurrentSilently() {
         if (reverting) return;
 
         @SuppressWarnings("unchecked")
         E candidate = (E) (isEditable() ? getEditor().getItem() : getSelectedItem());
 
-        if (!validator.test(candidate)) {
+        if (!isValid(candidate)) {
             revertSilentlyToLastValid();
         } else {
             lastValid = candidate;
