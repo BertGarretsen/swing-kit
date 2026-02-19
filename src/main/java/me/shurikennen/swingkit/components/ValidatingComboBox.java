@@ -18,6 +18,16 @@ public class ValidatingComboBox<E> extends JComboBox<E> {
         this.lastValid = getSelectedItem();
     }
 
+
+    @Override
+    public void setModel(ComboBoxModel<E> aModel) {
+        super.setModel(aModel);
+
+        if (!validator.test((E) getSelectedItem())) {
+            lastValid = getSelectedItem();
+        }
+    }
+
     @Override
     public void setSelectedItem(Object anObject) {
         super.setSelectedItem(anObject);
