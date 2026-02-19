@@ -6,6 +6,7 @@ import javax.swing.*;
 import java.util.function.Predicate;
 
 
+@SuppressWarnings("unchecked")
 public class ValidatingComboBox<E> extends JComboBox<E> {
     @Setter
     private Predicate<E> validator;
@@ -23,7 +24,7 @@ public class ValidatingComboBox<E> extends JComboBox<E> {
     public void setModel(ComboBoxModel<E> aModel) {
         super.setModel(aModel);
 
-        if (!validator.test((E) getSelectedItem())) {
+        if (validator != null && validator.test((E) getSelectedItem())) {
             lastValid = getSelectedItem();
         }
     }
@@ -45,12 +46,11 @@ public class ValidatingComboBox<E> extends JComboBox<E> {
 
         if (validator.test(candidate)) {
             lastValid = candidate;
-            super.fireActionEvent(); // listeners run ONLY here
+            super.fireActionEvent();
         } else {
-            // veto: do NOT notify any ActionListeners
+
             suppress = true;
             try {
-                // revert UI/state
                 if (isEditable()) getEditor().setItem(lastValid);
                 super.setSelectedItem(lastValid);
             } finally {
